@@ -1,0 +1,117 @@
+---
+title: "FML assignment 3 amettu1"
+author: "Adithya Reddy Mettu"
+date: "2024-03-11"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#Loading the required Packages
+```{r}
+library(dplyr)
+library(lattice)
+library(ISLR)
+library(e1071)
+library(caret)
+library(class)
+library(ggplot2)
+library(tidyr)
+library(gmodels)
+library(lattice)
+```
+
+#Loading the Universal bank data and sumary
+```{r}
+unibank.df <- read.csv("C:/Users/adith/Downloads/UniversalBank.csv")
+summary(unibank.df)
+```
+#converting the varaibles by using factors.
+```{r}
+unibank.df$Personal.Loan <- factor(unibank.df$Personal.Loan)
+unibank.df$Online <- factor(unibank.df$Online)
+unibank.df$CreditCard <- factor(unibank.df$CreditCard)
+```
+
+#lets perform the given tasks from here
+#set the seed also create a data partation of 60% training and remaining as validation
+```{r}
+set.seed(123)
+Train.index <- createDataPartition(unibank.df$Personal.Loan,p = 0.6,list = FALSE)
+train.df <- unibank.df[Train.index,]
+validation.df <- unibank.df[-Train.index,]
+```
+
+#Create a pivot table for the training data with Online as a column variable, CC as a row variable, and Loan as a secondary row variable.
+```{r}
+P.table <- xtabs(~ CreditCard + Online + Personal.Loan,data = train.df)
+ftable(P.table)
+```
+#Consider the task of classifying a customer who owns a bank credit card and is actively using online banking services. Looking at the pivot table, what is the probability that this customer will accept the loan offer? [This is the probability of loan acceptance (Loan = 1) conditional on having a bank credit card (CC = 1) and being an active user of online banking services (Online = 1)].
+```{r}
+probabality = 51/(51+467)
+probabality
+```
+#Create two separate pivot tables for the training data. One will have Loan (rows) as a function of Online (columns) and the other will have Loan (rows) as a function of CC.
+```{r}
+table(Personal.Loan = train.df$Personal.Loan, Online = train.df$Online)
+table(Personal.Loan = train.df$Personal.Loan, CreditCard = train.df$CreditCard)
+table(Personal.Loan = train.df$Personal.Loan)
+```
+#consider p as probablity
+#Compute the following quantities [P(A | B) means “the probability of A given B”]:
+
+#i. P(CC = 1 | Loan = 1) (the proportion of credit card holders among the loan #acceptors)
+
+```{r}
+p1 <- 84/(84+204)
+p1
+```
+#ii. P(Online = 1 | Loan = 1)
+```{r}
+p2 <- 176/(176+112)
+p2
+```
+#iii. P(Loan = 1) (the proportion of loan acceptors)
+```{r}
+p3 <- 288/(288+2712)
+p3
+
+```
+#iv. P(CC = 1 | Loan = 0)
+```{r}
+p4 <- 777/(777+1935)
+p4
+```
+#v. P(Online = 1 | Loan = 0)
+```{r}
+p5 <- 1611/(1611+1101)
+p5
+```
+#vi. P(Loan = 0)
+```{r}
+p6 <- 2712/(2712+288)
+p6
+```
+#Task5
+#Use the quantities computed above to compute the naive Bayes probability P(Loan = 1 | CC #= 1, Online = 1).
+```{r}
+computed_probablity <- (p1 * p2 * p3)/((p1 * p2 * p3) + (p4 * p5 * p6))
+computed_probablity
+```
+#Compare this value with the one obtained from the pivot table in (B). Which is a more #accurate estimate?
+#Value we got from question 2 was 0.0984556 and in the question 5 is 0.1000861 are almost same. The only difference between by the exact method and naive bayes method is the exact method would need the exact same independent variable classification to predict, whereas the naive bayes method does not. We can confirm that the value get from the question 2 is more accurate. Since we have taken the exact values from the pivot table.
+
+#Which of the entries in this table are needed for computing P(Loan = 1 | CC = 1, Online = 1)?
+#Run naive Bayes on the data. Examine the model output on training data, and find the entry #that corresponds to P(Loan = 1 | CC = 1, Online = 1). Compare this to the number you #obtained in (E).
+```{r}
+naviebayes.model <- naiveBayes(Personal.Loan ~ Online + CreditCard, data = train.df)
+to.predict = data.frame(Online=1, CreditCard= 1)
+predict(naviebayes.model, to.predict,type = 'raw')
+
+```
+#The value we got from question 7 is 0.09206369 and value derived from the task 5 is 0.1000861. # the result is almost same that we got from Task5. # There is only a minute difference because of the rounding. #The difference will not effect the rank order of the output.
